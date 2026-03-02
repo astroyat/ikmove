@@ -25,6 +25,7 @@ class Ikmove:
         q_deg[2] = joint[1]
         q_deg[3] = joint[2]
         q_deg[4] = joint[3] - 90
+        q_deg[5] = joint[4]
         q = np.radians(q_deg)
 
         pos = self.ikpy_chain.forward_kinematics(
@@ -51,7 +52,7 @@ class Ikmove:
         joint[1] = q_deg[2]
         joint[2] = q_deg[3]
         joint[3] = q_deg[4] + 90
-        joint[4] = self.joint[4]
+        joint[4] = q_deg[5]
         joint[5] = self.joint[5]
         return q, joint
 
@@ -61,8 +62,8 @@ class Ikmove:
         q[1] = joint[1]
         q[2] = joint[2]
         q[3] = joint[3] - 90
-        q[4] = self.joint[4]
-        q[5] = self.joint[5]
+        q[4] = joint[4]
+        q[5] = joint[5]
         return 2048 + ((q / 180) * 2048)
 
     def servo_to_joint(self, servo):
@@ -72,8 +73,8 @@ class Ikmove:
         joint[1] = q_deg[1]
         joint[2] = q_deg[2]
         joint[3] = q_deg[3] + 90
-        joint[4] = self.joint[4]
-        joint[5] = self.joint[5]
+        joint[4] = q_deg[4]
+        joint[5] = q_deg[5]
         return joint
 
     def plot(self, q, pos):
@@ -166,7 +167,7 @@ class Ikmove:
     def plot_trajectory(self, joint_waypoints, times):
         import matplotlib.pyplot as plt
 
-        trajectory = ikmove.joint_trajectory(joint_waypoints, times)
+        trajectory = self.joint_trajectory(joint_waypoints, times)
         time_points = trajectory["time_points"]
         joint_positions = trajectory["joint_positions"]
 

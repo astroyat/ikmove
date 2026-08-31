@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-1-g15f4949  Build Version: 1.6.7594.29634
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="SO_5DOF_ARM100_8j_URDF.SLDASM">
+  <link
+    name="base_link">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://SO_5DOF_ARM100_8j_URDF.SLDASM/meshes/Base.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <link
+    name="Rotation_Pitch">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://SO_5DOF_ARM100_8j_URDF.SLDASM/meshes/Rotation_Pitch.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Rotation"
+    type="revolute">
+    <origin
+      xyz="0 -0.0452 0.0165"
+      rpy="1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="Rotation_Pitch" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="Upper_Arm">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://SO_5DOF_ARM100_8j_URDF.SLDASM/meshes/Upper_Arm.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Pitch"
+    type="revolute">
+    <origin
+      xyz="0 0.1025 0.0306"
+      rpy="0 0 0" />
+    <parent
+      link="Rotation_Pitch" />
+    <child
+      link="Upper_Arm" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="Lower_Arm">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://SO_5DOF_ARM100_8j_URDF.SLDASM/meshes/Lower_Arm.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Elbow"
+    type="revolute">
+    <origin
+      xyz="0 0.11257 0.028"
+      rpy="0 0 0" />
+    <parent
+      link="Upper_Arm" />
+    <child
+      link="Lower_Arm" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="Wrist_Pitch_Roll">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://SO_5DOF_ARM100_8j_URDF.SLDASM/meshes/Wrist_Pitch_Roll.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_Pitch"
+    type="revolute">
+    <origin
+      xyz="0 0.0052 0.1349"
+      rpy="0 0 0" />
+    <parent
+      link="Lower_Arm" />
+    <child
+      link="Wrist_Pitch_Roll" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="Fixed_Jaw">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://SO_5DOF_ARM100_8j_URDF.SLDASM/meshes/Fixed_Jaw.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_Roll"
+    type="revolute">
+    <origin
+      xyz="0 -0.0601 0"
+      rpy="0 0 0" />
+    <parent
+      link="Wrist_Pitch_Roll" />
+    <child
+      link="Fixed_Jaw" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="Moving_Jaw">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://SO_5DOF_ARM100_8j_URDF.SLDASM/meshes/Moving Jaw.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Jaw"
+    type="revolute">
+    <origin
+      xyz="-0.0202 -0.0244 0"
+      rpy="3.1416 0 3.1416" />
+    <parent
+      link="Fixed_Jaw" />
+    <child
+      link="Moving_Jaw" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="end_link">
+  </link>
+  <joint
+    name="end_joint"
+    type="fixed">
+    <origin
+      xyz="-0.0202 -0.085 0"
+      rpy="3.1416 0 3.1416" />
+    <parent
+      link="Moving_Jaw" />
+    <child
+      link="end_link" />
+  </joint>
+</robot>

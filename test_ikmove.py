@@ -52,21 +52,23 @@ class TestIkmove(unittest.TestCase):
         np.testing.assert_array_almost_equal(initial_joint, recovered_joint, decimal=1)
 
     def test_standard_upright_candle_pose(self):
-        """Test standard SO-100 upright pose [0, 90, 0, 0, 0, 0]."""
-        candle_joint = [0, 90, 0, 0, 0, 0]
+        """Test standard SO-100 upright pose [0, 0, -90, 0, 0, 0]."""
+        candle_joint = self.ik.STANDARD_POSITIONS["candle"]
         servos = self.ik.joint_to_servo(candle_joint)
-        expected_servos = np.array([2048, 2048, 1024, 1024, 3072, 1024])
+        # In ikmove: joint 3 has -90 deg offset for URDF/servo alignment
+        # [0, 0, -90, 0, 0, 0] -> [2048, 2048, 1024, 1024, 2048, 2048]
+        expected_servos = np.array([2048, 2048, 1024, 1024, 2048, 2048])
         np.testing.assert_array_equal(servos, expected_servos)
 
         recovered = self.ik.servo_to_joint(servos)
         np.testing.assert_array_almost_equal(candle_joint, recovered, decimal=1)
 
     def test_standard_zero_degrees_pose(self):
-        """Test that [0, 0, 0, 0, 0, 0] in standard matches main_follower.json start_pos."""
+        """Test that [0, 0, 0, 0, 0, 0] in standard matches center 2048 ticks."""
         zero_joint = [0, 0, 0, 0, 0, 0]
         servos = self.ik.joint_to_servo(zero_joint)
-        expected_start_pos = np.array([2048, 3072, 1024, 1024, 3072, 1024])
-        np.testing.assert_array_equal(servos, expected_start_pos)
+        expected_center = np.array([2048, 2048, 2048, 1024, 2048, 2048])
+        np.testing.assert_array_equal(servos, expected_center)
 
     def test_plot_trajectory_no_nameerror(self):
         """Test that plot_trajectory doesn't raise NameError when calling joint_trajectory."""
@@ -75,7 +77,7 @@ class TestIkmove(unittest.TestCase):
         plt.show = lambda: None
 
         try:
-            joint_waypoints = [[0, 90, 0, 0, 0, 0], [10, 45, 10, 0, 10, 0]]
+            joint_waypoints = [[0, 0, -90, 0, 0, 0], [10, 45, 10, 0, 10, 0]]
             times = [10]
             self.ik.plot_trajectory(joint_waypoints, times)
         except NameError as e:
@@ -86,16 +88,16 @@ class TestIkmove(unittest.TestCase):
             plt.show = original_show
 
     def test_cycle_through_so101_standard_positions(self):
-        """Test that the full cycle through standard positions computes a valid trajectory."""
+        """Test that the cycle through standard positions computes a valid trajectory."""
         waypoints = self.ik.get_standard_cycle_waypoints()
-        self.assertEqual(len(waypoints), 7)
+        self.assertEqual(len(waypoints), 5)
         self.assertEqual(waypoints[0], self.ik.STANDARD_POSITIONS["rest"])
         self.assertEqual(waypoints[-1], self.ik.STANDARD_POSITIONS["rest"])
 
         times = [50] * (len(waypoints) - 1)
         traj = self.ik.joint_trajectory(waypoints, times)
-        self.assertEqual(len(traj["time_points"]), 301)
-        self.assertEqual(len(traj["joint_positions"]), 301)
+        self.assertEqual(len(traj["time_points"]), 201)
+        self.assertEqual(len(traj["joint_positions"]), 201)
 
         # Verify start and end postures match rest
         np.testing.assert_allclose(traj["joint_positions"][0], self.ik.STANDARD_POSITIONS["rest"], atol=1e-3)

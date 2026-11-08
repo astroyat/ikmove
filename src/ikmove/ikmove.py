@@ -41,23 +41,14 @@ class Ikmove:
         )
 
     def joint_to_pos(self, joint):
-        """Convert standard SO-100 joint degrees to URDF link coordinates and FK pos.
-
-        Standard SO-100 joint angles (degrees):
-            joint[0]: shoulder_pan  (0 = forward)
-            joint[1]: shoulder_lift (0 = horizontal forward, 90 = vertical upright)
-            joint[2]: elbow_flex    (0 = straight in-line with upper arm, 90 = bent at 90 deg)
-            joint[3]: wrist_flex    (0 = straight in-line with forearm, 90 = bent down at 90 deg)
-            joint[4]: wrist_roll    (0 = neutral roll)
-            joint[5]: gripper       (0 = closed)
-        """
+        """Convert standard joint degrees to URDF link coordinates and FK pos."""
         if self.ikpy_chain is None:
             self.set_ikpy()
 
         q_deg = np.zeros(len(joint) + 2)
         q_deg[1] = joint[0]
-        q_deg[2] = 90.0 - joint[1]
-        q_deg[3] = joint[2] - 90.0
+        q_deg[2] = joint[1]
+        q_deg[3] = joint[2]
         q_deg[4] = joint[3] - 90.0
         q_deg[5] = joint[4]
         q = np.radians(q_deg)
@@ -68,7 +59,7 @@ class Ikmove:
         return q, pos
 
     def pos_to_joint(self, pos, rot=None, mode=None):
-        """Convert Cartesian position to standard SO-100 joint degrees via IK."""
+        """Convert Cartesian position to joint degrees via IK."""
         if self.ikpy_chain is None:
             self.set_ikpy()
 
@@ -84,33 +75,35 @@ class Ikmove:
         joint = np.zeros(6)
         q_deg = np.degrees(q)
         joint[0] = q_deg[1]
-        joint[1] = 90.0 - q_deg[2]
-        joint[2] = q_deg[3] + 90.0
+        joint[1] = q_deg[2]
+        joint[2] = q_deg[3]
         joint[3] = q_deg[4] + 90.0
         joint[4] = q_deg[5]
         joint[5] = self.joint[5]
         return q, joint
 
     def joint_to_servo(self, joint):
-        """Convert standard SO-100 joint degrees to raw Feetech servo ticks [0..4095].
-
-        Uses standard LeRobot revert_calibration with homing_offset and drive_mode.
-        """
-        deg = np.array(joint, dtype=float)
-        val = (deg / 180.0) * 2048.0
-        val = val - self.homing_offset
-        val = np.where(self.drive_mode == 1, -val, val)
-        return np.round(val).astype(int)
+        """Convert joint degrees to raw Feetech servo ticks [0..4095] (2048 center)."""
+        q = np.zeros(len(joint))
+        q[0] = joint[0]
+        q[1] = joint[1]
+        q[2] = joint[2]
+        q[3] = joint[3] - 90.0
+        q[4] = joint[4]
+        q[5] = joint[5]
+        return np.round(2048.0 + ((q / 180.0) * 2048.0)).astype(int)
 
     def servo_to_joint(self, servo):
-        """Convert raw Feetech servo ticks [0..4095] to standard SO-100 joint degrees.
-
-        Uses standard LeRobot apply_calibration with homing_offset and drive_mode.
-        """
-        s = np.array(servo, dtype=float)
-        val = np.where(self.drive_mode == 1, -s, s)
-        val = val + self.homing_offset
-        return (val / 2048.0) * 180.0
+        """Convert raw Feetech servo ticks [0..4095] to joint degrees."""
+        q_deg = (np.array(servo, dtype=float) - 2048.0) / 2048.0 * 180.0
+        joint = np.zeros(len(q_deg))
+        joint[0] = q_deg[0]
+        joint[1] = q_deg[1]
+        joint[2] = q_deg[2]
+        joint[3] = q_deg[3] + 90.0
+        joint[4] = q_deg[4]
+        joint[5] = q_deg[5]
+        return joint
 
     def plot(self, q, pos, title=None, ax=None, block=True):
         import ikpy.utils.plot as plot_utils
@@ -262,11 +255,11 @@ class Ikmove:
         }
 
     STANDARD_POSITIONS = {
-        "rest": [0.0, 180.0, 90.0, 90.0, 0.0, 0.0],      # Safe parked / folded pose
-        "homing": [0.0, 90.0, 90.0, 0.0, 0.0, 0.0],      # "L" pose (middle of servo range)
-        "candle": [0.0, 90.0, 0.0, 0.0, 0.0, 0.0],       # Upright vertical pose
-        "zero": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],          # Horizontal forward reaching
-        "rotated": [90.0, 90.0, 90.0, 90.0, 90.0, 0.0],  # 90 deg calibration check
+        "rest": [0.0, -90.0, 0.0, 90.0, 0.0, 0.0],       # Safe parked / folded pose above base
+        "homing": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],        # Middle of servo range (tick 2048)
+        "candle": [0.0, 0.0, -90.0, 0.0, 0.0, 0.0],      # Upright vertical pose
+        "rotate_left": [90.0, 0.0, 0.0, 90.0, 0.80],     # 90 deg rotation left
+        "rotate_right": [-90.0, 0.0, 0.0, 90.0, 0.80],   # 90 deg rotation right
     }
 
     def get_standard_positions(self) -> dict[str, list[float]]:
@@ -275,9 +268,9 @@ class Ikmove:
 
     def get_standard_cycle_waypoints(self) -> list[list[float]]:
         """Return sequence of waypoints cycling safely through all standard postures:
-        rest -> homing -> candle -> zero -> rotated -> candle -> rest.
+        rest -> homing -> candle -> homing -> rest.
         """
-        cycle = ["rest", "homing", "candle", "zero", "rotated", "candle", "rest"]
+        cycle = ["rest", "homing", "candle", "homing", "rest"]
         return [self.STANDARD_POSITIONS[k] for k in cycle]
 
     def plot_trajectory(self, joint_waypoints, times):
